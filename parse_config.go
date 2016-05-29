@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 )
 
-//parse content
 
 type Server struct {
 	Name	string
@@ -22,12 +21,12 @@ type Servers struct {
 	services []Server
 }
 
-func main(){
+func NewServices() *Servers{
 
 	config_path := os.Getenv("GT_CONFIG")
 	config_content, err := ioutil.ReadFile(config_path)
 	if err != nil {
-		fmt.Println("read file error %s\n", err)
+		fmt.Println("read file error %s", err)
 		os.Exit(1)
 	}
 
@@ -35,14 +34,12 @@ func main(){
 	machines := new(Servers)
 
 	if err != nil {
-		fmt.Println("parse config encounter error: %s \n ", err)
+		fmt.Println("parse config encounter error: %s", err)
 	}
 
 	machines.parse_config(config, 0, 0)
-	fmt.Println("res: %v", machines.services)
 
-	machines.OpenNode(1)
-	fmt.Println("res: %v", machines.services)
+	return machines
 }
 
 func (this *Servers)parse_config(config *simplejson.Json, level int, index int) (num int) {
@@ -97,9 +94,9 @@ func (this *Servers) OpenNode(index int) {
 	}
 
 	this.services[index].Visible = true
-	level := this.services[index].Level
+	level := this.services[index].Level + 1
 
-	for i := index + 1; i < len(this.services) && this.services[i].Level > level; i ++ {
+	for i := index + 1; i < len(this.services) && this.services[i].Level == level; i ++ {
 		this.services[i].Visible = true
 	}
 
@@ -111,9 +108,9 @@ func (this *Servers) CloseNode(index int) {
 	}
 
 	this.services[index].Visible = false
-	level := this.services[index].Level
+	level := this.services[index].Level + 1
 
-	for i := index + 1; i < len(this.services) && this.services[i].Level > level; i ++ {
+	for i := index + 1; i < len(this.services) && this.services[i].Level == level; i ++ {
 		this.services[i].Visible = false
 	}
 
