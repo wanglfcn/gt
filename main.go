@@ -5,8 +5,10 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
+var servers *Servers
+
 func main() {
-	var servers *Servers = NewServices()
+	servers = NewServices()
 
 	gui := gocui.NewGui()
 
@@ -32,11 +34,14 @@ func main() {
 
 func layout(gui *gocui.Gui) error {
 	maxX, maxY := gui.Size()
-	if v, err := gui.SetView("hello", maxX/2 - 7, maxY/2, maxX/2 + 7, maxY/2 + 2); err != nil {
+	if v, err := gui.SetView("hello", maxX/2 - 17, maxY/2 - 12, maxX/2 + 27, maxY/2 + 3); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintln(v, "hello world")
+
+		for _, server := range servers.services {
+			fmt.Fprintf(v, "%s%s\t%s\n", server.Lines, server.Name, server.Ip)
+		}
 	}
 	return nil
 }
