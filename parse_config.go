@@ -69,13 +69,13 @@ func (this *Servers)parse_config(config *simplejson.Json, level int, index int) 
 		var passwd string
 
 		for array_index, ip := range ips {
-			if len(names) < array_index {
+			if array_index >= len(names) {
 				name = names[0]
 			} else {
 				name = names[array_index]
 			}
 
-			if len(users) < array_index {
+			if array_index >= len(users) {
 				user = users[0]
 				passwd = passwds[0]
 			} else {
