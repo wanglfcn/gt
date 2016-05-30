@@ -21,7 +21,8 @@ type Server struct {
 }
 
 type Servers struct {
-	services []Server
+	services	[]Server
+	title_len	int
 }
 
 func NewServices() *Servers{
@@ -48,6 +49,7 @@ func NewServices() *Servers{
 
 func (this *Servers)parse_config(config *simplejson.Json, level int, index int) (num int) {
 	var i int = 0
+	this.title_len = 0
 	for true {
 		machine := config.GetIndex(i)
 		i++
@@ -82,6 +84,9 @@ func (this *Servers)parse_config(config *simplejson.Json, level int, index int) 
 			}
 
 			this.services = append(this.services, Server{Name: name, User: user, Ip: ip, Passwd: passwd, Level: level, Visible: true, Index: index, Leaf: true})
+			if len(name) > this.title_len {
+				this.title_len = len(name)
+			}
 			index ++
 		}
 
@@ -105,6 +110,8 @@ func (this *Servers) OpenNode(index int) {
 		this.services[i].Visible = true
 	}
 
+	this.UpdateLines()
+
 }
 
 func (this *Servers) CloseNode(index int) {
@@ -118,6 +125,8 @@ func (this *Servers) CloseNode(index int) {
 	for i := index + 1; i < len(this.services) && this.services[i].Level == level; i ++ {
 		this.services[i].Visible = false
 	}
+
+	this.UpdateLines()
 
 }
 

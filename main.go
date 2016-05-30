@@ -2,6 +2,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 	"github.com/jroimartin/gocui"
 )
 
@@ -40,7 +41,8 @@ func layout(gui *gocui.Gui) error {
 		}
 
 		for _, server := range servers.services {
-			fmt.Fprintf(v, "%s%s\t%s\n", server.Lines, server.Name, server.Ip)
+			blanks := strings.Repeat(" ", servers.title_len - len(server.Name))
+			fmt.Fprintf(v, "%s %s%s\t\t%s\n", server.Lines, blanks, server.Name, server.Ip)
 		}
 	}
 	return nil
