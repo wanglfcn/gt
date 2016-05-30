@@ -49,7 +49,7 @@ func NewServices() *Servers{
 
 func (this *Servers)parse_config(config *simplejson.Json, level int, index int) (num int) {
 	var i int = 0
-	this.title_len = 0
+
 	for true {
 		machine := config.GetIndex(i)
 		i++
@@ -84,9 +84,6 @@ func (this *Servers)parse_config(config *simplejson.Json, level int, index int) 
 			}
 
 			this.services = append(this.services, Server{Name: name, User: user, Ip: ip, Passwd: passwd, Level: level, Visible: true, Index: index, Leaf: true})
-			if len(name) > this.title_len {
-				this.title_len = len(name)
-			}
 			index ++
 		}
 
@@ -133,8 +130,20 @@ func (this *Servers) CloseNode(index int) {
 func (this *Servers) UpdateLines() {
 	var consider, i , count int
 	count = len(this.services)
+
+	this.title_len = 0
+
 	for index, server := range this.services {
+
+		if len(server.Name) > this.title_len {
+			this.title_len = len(server.Name)
+		}
+
 		lines := make([]string, server.Level + 1)
+
+		for i := 0; i < server.Level + 1; i ++ {
+			lines[i] = "   "
+		}
 
 		var open_status int
 
@@ -161,7 +170,7 @@ func (this *Servers) UpdateLines() {
 		for i = index + 1; i < count && consider > 0; i ++ {
 			cur_node := this.services[i]
 
-			if cur_node.Visible || cur_node.Level == 0 && cur_node.Level <= consider {
+			if (cur_node.Visible || cur_node.Level == 0) && cur_node.Level <= consider {
 
 				if (cur_node.Level - 1 >= 0) {
 					lines[cur_node.Level - 1] = " │ "

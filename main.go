@@ -18,6 +18,7 @@ func main() {
 	}
 
 	defer gui.Close()
+	fmt.Println("max length:", servers.title_len)
 
 	gui.SetLayout(layout)
 
@@ -42,7 +43,7 @@ func layout(gui *gocui.Gui) error {
 
 		for _, server := range servers.services {
 			blanks := strings.Repeat(" ", servers.title_len - len(server.Name))
-			fmt.Fprintf(v, "%s %s%s\t\t%s\n", server.Lines, blanks, server.Name, server.Ip)
+			fmt.Fprintf(v, "%s %s%s\t\t%s\n", server.Lines, server.Name, blanks, server.Ip)
 		}
 	}
 	return nil
