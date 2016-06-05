@@ -10,7 +10,7 @@ import (
 
 type Server struct {
 	Name	string
-	Ip		string
+	Ip	string
 	User	string
 	Passwd	string
 	Level	int
@@ -83,7 +83,7 @@ func (this *Servers)parse_config(config *simplejson.Json, level int, index int) 
 				passwd = passwds[array_index]
 			}
 
-			this.services = append(this.services, Server{Name: name, User: user, Ip: ip, Passwd: passwd, Level: level, Visible: true, Index: index, Leaf: true})
+			this.services = append(this.services, Server{Name: name, User: user, Ip: ip, Passwd: passwd, Level: level, Visible: false, Index: index, Leaf: true})
 			index ++
 		}
 
@@ -103,8 +103,10 @@ func (this *Servers) OpenNode(index int) {
 	this.services[index].Visible = true
 	level := this.services[index].Level + 1
 
-	for i := index + 1; i < len(this.services) && this.services[i].Level == level; i ++ {
-		this.services[i].Visible = true
+	for i := index + 1; i < len(this.services) && this.services[i].Level >= level; i ++ {
+		if this.services[i].Level == level {
+			this.services[i].Visible = true
+		}
 	}
 
 	this.UpdateLines()
@@ -116,10 +118,9 @@ func (this *Servers) CloseNode(index int) {
 		return
 	}
 
-	this.services[index].Visible = false
 	level := this.services[index].Level + 1
 
-	for i := index + 1; i < len(this.services) && this.services[i].Level == level; i ++ {
+	for i := index + 1; i < len(this.services) && this.services[i].Level >= level; i ++ {
 		this.services[i].Visible = false
 	}
 
@@ -149,7 +150,7 @@ func (this *Servers) UpdateLines() {
 
 		open_status = '+'
 
-		if server.Visible {
+		if index < len(this.services) - 1 && this.services[index + 1].Visible {
 			open_status = '-'
 		}
 
