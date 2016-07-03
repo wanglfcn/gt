@@ -7,17 +7,6 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-var colors = []termbox.Attribute{
-	termbox.ColorBlack,
-	termbox.ColorRed,
-	termbox.ColorGreen,
-	termbox.ColorYellow,
-	termbox.ColorBlue,
-	termbox.ColorMagenta,
-	termbox.ColorCyan,
-	termbox.ColorWhite,
-}
-
 type Title struct {
 	id 	int
 	title 	string
@@ -95,7 +84,7 @@ func (this *ServerList)drawLine(index int, offset int, selected bool) {
 
 }
 
-func (this *ServerList)draw_bondary(fg, bg termbox.Attribute, title string) bool {
+func (this *ServerList)boundary(fg, bg termbox.Attribute, title string) bool {
 
 	if this.width < 5 || this.high < 9 {
 		return false
@@ -159,7 +148,7 @@ func (this *ServerList)redraw() {
 		this.drawLine(i, this.offset, i == this.currentIndex)
 	}
 
-	this.draw_bondary(termbox.ColorWhite, termbox.ColorDefault, "Machine list")
+	this.boundary(termbox.ColorWhite, termbox.ColorDefault, "Machine list")
 	termbox.Flush()
 }
 
@@ -173,4 +162,23 @@ func (this *ServerList)updateTitles() {
 			this.titles = append(this.titles, Title{id: server.Index, title: title})
 		}
 	}
+}
+
+func (this *ServerList)select_node() (username, password, ip string) {
+	username = ""
+	password = ""
+	ip 	 = ""
+	if this.currentIndex >= 0 && this.currentIndex < len(this.servers.services) {
+		username = this.servers.services[this.currentIndex].User
+		password = this.servers.services[this.currentIndex].Passwd
+		ip 	 = this.servers.services[this.currentIndex].Ip
+
+		info := fmt.Sprintf("username=%s\tpassword=%s\tip=%s", username, password, ip)
+
+		for _, c := range info {
+			termbox.SetCell(10, 30, c, termbox.ColorWhite, termbox.ColorDefault)
+		}
+		termbox.Flush()
+	}
+	return
 }
