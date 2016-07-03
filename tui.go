@@ -1,10 +1,23 @@
 package main
 
 import (
-	_ "github.com/nsf/termbox-go"
+	"github.com/nsf/termbox-go"
+	"github.com/mattn/go-runewidth"
+	_ "unicode/utf8"
 	"fmt"
 	"strings"
 )
+
+var colors = []termbox.Attribute{
+	termbox.ColorBlack,
+	termbox.ColorRed,
+	termbox.ColorGreen,
+	termbox.ColorYellow,
+	termbox.ColorBlue,
+	termbox.ColorMagenta,
+	termbox.ColorCyan,
+	termbox.ColorWhite,
+}
 
 type Title struct {
 	id 	int
@@ -21,12 +34,12 @@ type ServerList struct {
 	titles		[]Title
 }
 
-func NewServerList() *ServerList {
+func NewServerList(width, hight int) *ServerList {
 
 	serverList = new(ServerList)
 	serverList.servers = NewServices()
-	serverList.width = 100
-	serverList.high = 20
+	serverList.width = width
+	serverList.high = hight
 	serverList.offset = 0
 	serverList.currentIndex = 0
 	serverList.currentID = 0
@@ -65,9 +78,20 @@ func (this *ServerList)closeNode() {
 
 }
 
-func (this *ServerList)drawLine(index int, selected bool) {
+func (this *ServerList)drawLine(index int, offset int, selected bool) {
 	if index < len(this.titles) {
-		fmt.Printf("%2d %s", this.titles[index].id, this.titles[index].title)
+		background := termbox.ColorDefault
+
+		if selected {
+			background = termbox.ColorGreen
+			termbox.SetCell(2, index - offset + 4, '>', termbox.ColorWhite, background)
+		}
+
+		x := 3
+		for _, c := range this.titles[index].title {
+			termbox.SetCell(x, index - offset + 4, c, termbox.ColorWhite, background)
+			x += runewidth.RuneWidth(c)
+		}
 	}
 
 }
@@ -82,12 +106,8 @@ func (this *ServerList)redraw() {
 	}
 
 	for i := this.offset; i < this.high + this.offset && i < len(this.titles); i ++ {
-		this.drawLine(i, false)
+		this.drawLine(i, this.offset, i == this.currentIndex)
 	}
-
-	fmt.Print("active one:")
-	this.drawLine(this.currentIndex, true)
-	fmt.Println()
 }
 
 func (this *ServerList)updateTitles() {
