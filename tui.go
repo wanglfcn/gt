@@ -2,10 +2,9 @@ package main
 
 import (
 	"github.com/nsf/termbox-go"
-	"github.com/mattn/go-runewidth"
-	_ "unicode/utf8"
 	"fmt"
 	"strings"
+	"github.com/mattn/go-runewidth"
 )
 
 var colors = []termbox.Attribute{
@@ -34,12 +33,12 @@ type ServerList struct {
 	titles		[]Title
 }
 
-func NewServerList(width, hight int) *ServerList {
+func NewServerList() *ServerList {
 
 	serverList = new(ServerList)
 	serverList.servers = NewServices()
-	serverList.width = width
-	serverList.high = hight
+	serverList.width = 0
+	serverList.high = 0
 	serverList.offset = 0
 	serverList.currentIndex = 0
 	serverList.currentID = 0
@@ -90,13 +89,64 @@ func (this *ServerList)drawLine(index int, offset int, selected bool) {
 		x := 3
 		for _, c := range this.titles[index].title {
 			termbox.SetCell(x, index - offset + 4, c, termbox.ColorWhite, background)
-			x += runewidth.RuneWidth(c)
+			x += 1
 		}
 	}
 
 }
 
+func (this *ServerList)draw_bondary(fg, bg termbox.Attribute, title string) bool {
+
+	if this.width < 5 || this.high < 9 {
+		return false
+	}
+
+	title_width := runewidth.StringWidth(title)
+
+	start_pos := (this.width - 4 - title_width) / 2 + 2
+
+	if start_pos < 2 {
+		start_pos = 2
+	}
+
+	for _, c := range title {
+		if start_pos >= this.width - 1 {
+			break
+		}
+		termbox.SetCell(start_pos, 2, c, fg, bg)
+		start_pos += runewidth.RuneWidth(c)
+	}
+
+	for x := 1; x < this.width - 1; x ++ {
+		termbox.SetCell(x, 1, '─', fg, bg)
+		termbox.SetCell(x, 3, '─', fg, bg)
+		termbox.SetCell(x, this.high - 3, '─', fg, bg)
+		termbox.SetCell(x, this.high - 1, '─', fg, bg)
+	}
+
+	for y := 1; y < this.high - 1; y ++ {
+		termbox.SetCell(1, y, '│', fg, bg)
+		termbox.SetCell(this.width - 2, y, '│', fg, bg)
+	}
+
+	termbox.SetCell(1, 1, '┌', fg, bg)
+	termbox.SetCell(1, 3, '├', fg, bg)
+	termbox.SetCell(1, this.high - 3, '├', fg, bg)
+	termbox.SetCell(1, this.high - 1, '└', fg, bg)
+
+	termbox.SetCell(this.width - 2, 1, '┐', fg, bg)
+	termbox.SetCell(this.width - 2, 3, '┤', fg, bg)
+	termbox.SetCell(this.width - 2, this.high - 3, '┤', fg, bg)
+	termbox.SetCell(this.width - 2, this.high - 1, '┘', fg, bg)
+
+	return true
+}
+
+
 func (this *ServerList)redraw() {
+	this.width, this.high = termbox.Size()
+	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+
 	if this.currentIndex  < this.offset {
 		this.offset = this.currentIndex
 	}
@@ -108,6 +158,9 @@ func (this *ServerList)redraw() {
 	for i := this.offset; i < this.high + this.offset && i < len(this.titles); i ++ {
 		this.drawLine(i, this.offset, i == this.currentIndex)
 	}
+
+	this.draw_bondary(termbox.ColorWhite, termbox.ColorDefault, "Machine list")
+	termbox.Flush()
 }
 
 func (this *ServerList)updateTitles() {
