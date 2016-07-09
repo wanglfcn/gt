@@ -98,7 +98,8 @@ func main() {
 	termbox.Close()
 
 	if len(host) > 0 {
-		fmt.Printf("user:%s, password:%s, host:%s", username, password, host)
+		fmt.Printf("Host:%s\n", host)
+		sshpass(username + "@" + host, password)
 	}
 }
 
