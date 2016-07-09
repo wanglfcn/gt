@@ -77,9 +77,12 @@ func main() {
 					case 'O': fallthrough
 					case 'o': serverList.closeNode()
 
+					case 'n': serverList.go_next(true)
+
+					case 'N': serverList.go_next(false)
+
 					case '/':
 						serverList.set_search_mode()
-						serverList.redraw()
 					}
 				}
 			case termbox.EventResize:

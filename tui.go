@@ -19,6 +19,12 @@ const (
 	Search
 )
 
+type SearchNode struct {
+	search_str	string
+	result 		[]int
+	curr_pos	int
+}
+
 type ServerList struct {
 	width 		int
 	high		int
@@ -27,9 +33,8 @@ type ServerList struct {
 	currentID	int
 	servers		*Servers
 	titles		[]Title
-	search_result	[]int
 	mode		Mode
-	search_str	string
+	searchNode 	SearchNode
 }
 
 func NewServerList() *ServerList {
@@ -44,7 +49,8 @@ func NewServerList() *ServerList {
 	serverList.updateTitles()
 	serverList.redraw()
 	serverList.mode = Normal
-	serverList.search_str = ""
+	serverList.searchNode.search_str = ""
+	serverList.searchNode.curr_pos = 0
 	return serverList
 }
 
@@ -52,6 +58,9 @@ func (this *ServerList)moveUp() {
 	if this.currentIndex > 0 {
 		this.currentIndex -= 1
 		this.currentID = this.titles[this.currentIndex].id
+		if this.currentIndex < this.offset {
+			this.offset = this.currentIndex
+		}
 		this.redraw()
 	}
 }
@@ -60,6 +69,11 @@ func (this *ServerList)moveDown() {
 	if this.currentIndex < (len(this.titles) - 1) {
 		this.currentIndex += 1
 		this.currentID = this.titles[this.currentIndex].id
+
+		if this.currentIndex - this.offset > this.high - 8 {
+			this.offset ++
+		}
+
 		this.redraw()
 	}
 }
@@ -158,7 +172,7 @@ func (this *ServerList)boundary(fg, bg termbox.Attribute, title string) bool {
 		fg, bg = bg, fg
 	}
 
-	this.drawText(2, this.high - 2, this.search_str, fg, bg)
+	this.drawText(2, this.high - 2, this.searchNode.search_str, fg, bg)
 
 	this.drawText(this.width - 8, this.high - 2, status, fg, bg)
 
@@ -166,13 +180,22 @@ func (this *ServerList)boundary(fg, bg termbox.Attribute, title string) bool {
 }
 
 func (this *ServerList)search() {
-	this.search_result = this.search_result[:0]
+	this.searchNode.result = this.searchNode.result[:0]
 
-	for _, server := range this.servers.services {
-		if (strings.Contains(server.Ip, this.search_str) || strings.Contains(server.Name, this.search_str)) {
-			this.search_result = append(this.search_result, server.Index)
+	count := len(this.servers.services)
+
+	for i := 0; i < count; i ++ {
+		server := this.servers.services[(this.currentID + i) % count]
+
+		if (
+		strings.Contains(server.Ip, this.searchNode.search_str) ||
+		strings.Contains(strings.ToLower(server.Name), strings.ToLower(this.searchNode.search_str))) {
+			this.searchNode.result = append(this.searchNode.result, server.Index)
 		}
 	}
+
+	this.searchNode.curr_pos = -1
+	this.go_next(true)
 }
 
 func (this *ServerList)redraw() {
@@ -187,7 +210,7 @@ func (this *ServerList)redraw() {
 		this.offset = this.currentIndex - this.high + 1
 	}
 
-	for i := this.offset; i < this.high + this.offset && i < len(this.titles); i ++ {
+	for i := this.offset; i < this.high + this.offset - 7 && i < len(this.titles); i ++ {
 		this.drawLine(i, this.offset, i == this.currentIndex)
 	}
 
@@ -227,18 +250,18 @@ func (this *ServerList)select_node() (username, password, ip string) {
 }
 
 func (this *ServerList)clear_search() {
-	this.search_result = this.search_result[:0]
-	this.search_str = ""
+	this.searchNode.search_str = ""
+	this.searchNode.result = this.searchNode.result[:0]
 }
 
 func (this *ServerList)add_search_str(str string) {
-	this.search_str += str
+	this.searchNode.search_str += str
 }
 
 func (this *ServerList)delete_search_str() {
-	last := len(this.search_str)
+	last := len(this.searchNode.search_str)
 	if last > 0 {
-		this.search_str = this.search_str[:last - 1]
+		this.searchNode.search_str = this.searchNode.search_str[:last - 1]
 	}
 }
 
@@ -248,4 +271,36 @@ func (this *ServerList)set_normal_mode() {
 
 func (this *ServerList)set_search_mode() {
 	this.mode = Search
+	this.clear_search()
+	this.redraw()
+}
+
+func (this *SearchNode)get_index(down bool)(index int, ok bool) {
+	count := len(this.result)
+	if (count == 0) {
+		index = -1
+		ok = false
+		return
+	}
+
+	ok = true
+	if down {
+		this.curr_pos = (this.curr_pos + 1) % count
+	} else {
+		this.curr_pos = (this.curr_pos - 1 + count) % count
+	}
+
+	index = this.result[this.curr_pos]
+	return
+}
+
+func (this *ServerList)go_next(down bool) {
+	index, ok := this.searchNode.get_index(down)
+
+	if ok == false {
+		return
+	}
+
+	this.currentIndex = index
+	this.redraw()
 }
