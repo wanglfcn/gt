@@ -301,6 +301,31 @@ func (this *ServerList)go_next(down bool) {
 		return
 	}
 
-	this.currentIndex = index
-	this.redraw()
+	//待优化
+
+	level := this.servers.services[index].Level
+
+	for i := index; i >= 0 && level >= 0; i -- {
+		if (this.servers.services[i].Level < level) {
+			this.currentID = index
+			this.expandNode()
+			level --
+		}
+	}
+
+	for i, server := range this.titles {
+		if server.id == index {
+			this.currentIndex = i
+
+			if this.currentIndex - this.offset > this.high - 8 {
+				this.offset ++
+			} else if this.currentIndex < this.offset {
+				this.offset = this.currentIndex
+			}
+
+			this.redraw()
+			return
+		}
+
+	}
 }
