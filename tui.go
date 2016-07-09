@@ -23,6 +23,7 @@ type SearchNode struct {
 	search_str	string
 	result 		[]int
 	curr_pos	int
+	dirty		bool
 }
 
 type ServerList struct {
@@ -56,6 +57,7 @@ func NewServerList() *ServerList {
 
 func (this *ServerList)moveUp() {
 	if this.currentIndex > 0 {
+		this.searchNode.dirty = true
 		this.currentIndex -= 1
 		this.currentID = this.titles[this.currentIndex].id
 		if this.currentIndex < this.offset {
@@ -67,6 +69,7 @@ func (this *ServerList)moveUp() {
 
 func (this *ServerList)moveDown() {
 	if this.currentIndex < (len(this.titles) - 1) {
+		this.searchNode.dirty = true
 		this.currentIndex += 1
 		this.currentID = this.titles[this.currentIndex].id
 
@@ -166,20 +169,31 @@ func (this *ServerList)boundary(fg, bg termbox.Attribute, title string) bool {
 	termbox.SetCell(this.width - 9, this.high - 2, '│', fg, bg)
 	termbox.SetCell(this.width - 9, this.high - 1, '┴', fg, bg)
 
+	this.drawText(2, this.high - 2, this.searchNode.search_str, fg, bg)
+
 	status := "Normal";
 	if (this.mode == Search) {
 		status = "Search"
+		termbox.SetCursor(2 + runewidth.StringWidth(this.searchNode.search_str), this.high - 2)
 		fg, bg = bg, fg
+	} else {
+		termbox.SetCursor(-1, -1)
 	}
-
-	this.drawText(2, this.high - 2, this.searchNode.search_str, fg, bg)
 
 	this.drawText(this.width - 8, this.high - 2, status, fg, bg)
 
 	return true
 }
 
+
 func (this *ServerList)search() {
+	this.update_search_list()
+	this.searchNode.curr_pos = -1
+	this.searchNode.dirty = false
+	this.go_next(true)
+}
+
+func (this *ServerList)update_search_list() {
 	this.searchNode.result = this.searchNode.result[:0]
 
 	count := len(this.servers.services)
@@ -193,9 +207,6 @@ func (this *ServerList)search() {
 			this.searchNode.result = append(this.searchNode.result, server.Index)
 		}
 	}
-
-	this.searchNode.curr_pos = -1
-	this.go_next(true)
 }
 
 func (this *ServerList)redraw() {
@@ -295,6 +306,13 @@ func (this *SearchNode)get_index(down bool)(index int, ok bool) {
 }
 
 func (this *ServerList)go_next(down bool) {
+
+	if this.searchNode.dirty {
+		this.update_search_list()
+		this.searchNode.dirty = false
+		this.searchNode.curr_pos = 0
+	}
+
 	index, ok := this.searchNode.get_index(down)
 
 	if ok == false {
@@ -305,9 +323,9 @@ func (this *ServerList)go_next(down bool) {
 
 	level := this.servers.services[index].Level
 
-	for i := index; i >= 0 && level >= 0; i -- {
+	for i := index - 1; i >= 0 && level >= 0; i -- {
 		if (this.servers.services[i].Level < level) {
-			this.currentID = index
+			this.currentID = i
 			this.expandNode()
 			level --
 		}
@@ -316,6 +334,7 @@ func (this *ServerList)go_next(down bool) {
 	for i, server := range this.titles {
 		if server.id == index {
 			this.currentIndex = i
+			this.currentID = index
 
 			if this.currentIndex - this.offset > this.high - 8 {
 				this.offset ++
