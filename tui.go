@@ -245,17 +245,11 @@ func (this *ServerList)select_node() (username, password, ip string) {
 	username = ""
 	password = ""
 	ip 	 = ""
-	if this.currentIndex >= 0 && this.currentIndex < len(this.servers.services) {
-		username = this.servers.services[this.currentIndex].User
-		password = this.servers.services[this.currentIndex].Passwd
-		ip 	 = this.servers.services[this.currentIndex].Ip
+	if this.currentID >= 0 && this.currentID < len(this.servers.services) {
+		username = this.servers.services[this.currentID].User
+		password = this.servers.services[this.currentID].Passwd
+		ip 	 = this.servers.services[this.currentID].Ip
 
-		info := fmt.Sprintf("username=%s\tpassword=%s\tip=%s", username, password, ip)
-
-		for _, c := range info {
-			termbox.SetCell(10, 30, c, termbox.ColorWhite, termbox.ColorDefault)
-		}
-		termbox.Flush()
 	}
 	return
 }
