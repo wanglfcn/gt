@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/nsf/termbox-go"
 	"fmt"
+	"time"
 )
 
 var serverList *ServerList
@@ -12,6 +13,8 @@ func main() {
 	host := ""
 	username := ""
 	password := ""
+
+	last_g := time.Now().UnixNano()
 
 	err := termbox.Init()
 
@@ -85,6 +88,17 @@ func main() {
 
 					case '/':
 						serverList.set_search_mode()
+
+					case 'g':
+						if time.Now().UnixNano() - last_g < 500 * int64(time.Millisecond) {
+							serverList.go_first()
+						} else {
+							last_g = time.Now().UnixNano()
+						}
+
+					case 'G':
+						serverList.go_last()
+
 					}
 				}
 			case termbox.EventResize:

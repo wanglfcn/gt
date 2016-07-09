@@ -60,9 +60,8 @@ func (this *ServerList)moveUp() {
 		this.searchNode.dirty = true
 		this.currentIndex -= 1
 		this.currentID = this.titles[this.currentIndex].id
-		if this.currentIndex < this.offset {
-			this.offset = this.currentIndex
-		}
+
+		this.adjust_offset()
 		this.redraw()
 	}
 }
@@ -73,9 +72,7 @@ func (this *ServerList)moveDown() {
 		this.currentIndex += 1
 		this.currentID = this.titles[this.currentIndex].id
 
-		if this.currentIndex - this.offset > this.high - 8 {
-			this.offset ++
-		}
+		this.adjust_offset()
 
 		this.redraw()
 	}
@@ -104,11 +101,7 @@ func (this *ServerList)drawLine(index int, offset int, selected bool) {
 			termbox.SetCell(2, index - offset + 4, '>', termbox.ColorWhite, background)
 		}
 
-		x := 3
-		for _, c := range this.titles[index].title {
-			termbox.SetCell(x, index - offset + 4, c, termbox.ColorWhite, background)
-			x += 1
-		}
+		this.drawText(3, index - offset + 4, this.titles[index].title, termbox.ColorWhite, background)
 	}
 
 }
@@ -330,15 +323,45 @@ func (this *ServerList)go_next(down bool) {
 			this.currentIndex = i
 			this.currentID = index
 
-			if this.currentIndex - this.offset > this.high - 8 {
-				this.offset ++
-			} else if this.currentIndex < this.offset {
-				this.offset = this.currentIndex
-			}
+			this.adjust_offset()
 
 			this.redraw()
 			return
 		}
 
 	}
+}
+
+func (this *ServerList)adjust_offset() {
+
+	if this.currentIndex - this.offset > this.high - 8 {
+		this.offset ++
+	} else if this.currentIndex < this.offset {
+		this.offset = this.currentIndex
+	}
+
+}
+
+func (this *ServerList)go_first() {
+	if len(this.titles) == 0 {
+		return
+	}
+
+	this.searchNode.dirty = true
+	this.currentIndex = 0
+	this.currentID = this.titles[this.currentIndex].id
+	this.adjust_offset()
+	this.redraw()
+}
+
+func (this *ServerList)go_last() {
+	if len(this.titles) == 0 {
+		return
+	}
+	this.searchNode.dirty = true
+
+	this.currentIndex = len(this.titles) - 1
+	this.currentID = this.titles[this.currentIndex].id
+	this.adjust_offset()
+	this.redraw()
 }
