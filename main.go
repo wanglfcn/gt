@@ -3,12 +3,15 @@ package main
 import (
 	"github.com/nsf/termbox-go"
 	"fmt"
-	"log"
 )
 
 var serverList *ServerList
 
 func main() {
+
+	host := ""
+	username := ""
+	password := ""
 
 	err := termbox.Init()
 
@@ -16,7 +19,6 @@ func main() {
 		panic(err)
 	}
 
-	defer termbox.Close()
 
 	serverList = NewServerList()
 
@@ -54,9 +56,9 @@ func main() {
 			case termbox.EventKey :
 				switch event.Key {
 				case termbox.KeyEnter:
-					username, password, ip := serverList.select_node()
-					log.Println(fmt.Sprintf("username: %s\tpassword=%sip=%s", username, password, ip))
-				//break mainloop
+					username, password, host = serverList.select_node()
+					break mainloop
+
 				case termbox.KeyEsc:
 					break mainloop
 
@@ -91,8 +93,12 @@ func main() {
 			}
 		}
 
-
 	}
 
+	termbox.Close()
+
+	if len(host) > 0 {
+		fmt.Printf("user:%s, password:%s, host:%s", username, password, host)
+	}
 }
 
