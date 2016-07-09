@@ -12,6 +12,13 @@ type Title struct {
 	title 	string
 }
 
+type Mode uint
+
+const (
+	Normal Mode = iota
+	Search
+)
+
 type ServerList struct {
 	width 		int
 	high		int
@@ -20,6 +27,9 @@ type ServerList struct {
 	currentID	int
 	servers		*Servers
 	titles		[]Title
+	search_result	[]int
+	mode		Mode
+	search_str	string
 }
 
 func NewServerList() *ServerList {
@@ -33,6 +43,8 @@ func NewServerList() *ServerList {
 	serverList.currentID = 0
 	serverList.updateTitles()
 	serverList.redraw()
+	serverList.mode = Normal
+	serverList.search_str = ""
 	return serverList
 }
 
@@ -84,6 +96,20 @@ func (this *ServerList)drawLine(index int, offset int, selected bool) {
 
 }
 
+func (this *ServerList)drawText(x, y int, text string, fg, bg termbox.Attribute) {
+	if x < 1 || x >= this.width - 1 || y < 1 || y >= this.high - 1 {
+		return
+	}
+
+	for _, c := range text {
+		if x >= this.width - 1 {
+			break
+		}
+		termbox.SetCell(x, y, c, fg, bg)
+		x += runewidth.RuneWidth(c)
+	}
+}
+
 func (this *ServerList)boundary(fg, bg termbox.Attribute, title string) bool {
 
 	if this.width < 5 || this.high < 9 {
@@ -98,13 +124,7 @@ func (this *ServerList)boundary(fg, bg termbox.Attribute, title string) bool {
 		start_pos = 2
 	}
 
-	for _, c := range title {
-		if start_pos >= this.width - 1 {
-			break
-		}
-		termbox.SetCell(start_pos, 2, c, fg, bg)
-		start_pos += runewidth.RuneWidth(c)
-	}
+	this.drawText(start_pos, 2, title, fg, bg)
 
 	for x := 1; x < this.width - 1; x ++ {
 		termbox.SetCell(x, 1, '─', fg, bg)
@@ -128,9 +148,32 @@ func (this *ServerList)boundary(fg, bg termbox.Attribute, title string) bool {
 	termbox.SetCell(this.width - 2, this.high - 3, '┤', fg, bg)
 	termbox.SetCell(this.width - 2, this.high - 1, '┘', fg, bg)
 
+	termbox.SetCell(this.width - 9, this.high - 3, '┬', fg, bg)
+	termbox.SetCell(this.width - 9, this.high - 2, '│', fg, bg)
+	termbox.SetCell(this.width - 9, this.high - 1, '┴', fg, bg)
+
+	status := "Normal";
+	if (this.mode == Search) {
+		status = "Search"
+		fg, bg = bg, fg
+	}
+
+	this.drawText(2, this.high - 2, this.search_str, fg, bg)
+
+	this.drawText(this.width - 8, this.high - 2, status, fg, bg)
+
 	return true
 }
 
+func (this *ServerList)search() {
+	this.search_result = this.search_result[:0]
+
+	for _, server := range this.servers.services {
+		if (strings.Contains(server.Ip, this.search_str) || strings.Contains(server.Name, this.search_str)) {
+			this.search_result = append(this.search_result, server.Index)
+		}
+	}
+}
 
 func (this *ServerList)redraw() {
 	this.width, this.high = termbox.Size()
@@ -181,4 +224,28 @@ func (this *ServerList)select_node() (username, password, ip string) {
 		termbox.Flush()
 	}
 	return
+}
+
+func (this *ServerList)clear_search() {
+	this.search_result = this.search_result[:0]
+	this.search_str = ""
+}
+
+func (this *ServerList)add_search_str(str string) {
+	this.search_str += str
+}
+
+func (this *ServerList)delete_search_str() {
+	last := len(this.search_str)
+	if last > 0 {
+		this.search_str = this.search_str[:last - 1]
+	}
+}
+
+func (this *ServerList)set_normal_mode() {
+	this.mode = Normal
+}
+
+func (this *ServerList)set_search_mode() {
+	this.mode = Search
 }
