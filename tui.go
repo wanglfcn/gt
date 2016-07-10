@@ -116,7 +116,7 @@ func (this *ServerList)drawText(x, y int, text string, fg, bg termbox.Attribute)
 			break
 		}
 		termbox.SetCell(x, y, c, fg, bg)
-		x += runewidth.RuneWidth(c)
+		x += 1
 	}
 }
 
@@ -335,7 +335,7 @@ func (this *ServerList)go_next(down bool) {
 func (this *ServerList)adjust_offset() {
 
 	if this.currentIndex - this.offset > this.high - 8 {
-		this.offset ++
+		this.offset = this.currentIndex - this.high + 8
 	} else if this.currentIndex < this.offset {
 		this.offset = this.currentIndex
 	}
@@ -361,6 +361,30 @@ func (this *ServerList)go_last() {
 	this.searchNode.dirty = true
 
 	this.currentIndex = len(this.titles) - 1
+	this.currentID = this.titles[this.currentIndex].id
+	this.adjust_offset()
+	this.redraw()
+}
+
+func (this *ServerList)page_up() {
+	this.currentIndex -= this.high / 2
+	if this.currentIndex < 0 {
+		this.currentIndex = 0
+	}
+
+	this.searchNode.dirty = true
+	this.currentID = this.titles[this.currentIndex].id
+	this.adjust_offset()
+	this.redraw()
+}
+
+func (this *ServerList)page_down() {
+	this.currentIndex += this.high / 2
+	if this.currentIndex >= len(this.titles) {
+		this.currentIndex = len(this.titles) - 1
+	}
+
+	this.searchNode.dirty = true
 	this.currentID = this.titles[this.currentIndex].id
 	this.adjust_offset()
 	this.redraw()

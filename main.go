@@ -65,6 +65,12 @@ func main() {
 				case termbox.KeyEsc:
 					break mainloop
 
+				case termbox.KeyCtrlD:
+					serverList.page_down()
+
+				case termbox.KeyCtrlU:
+					serverList.page_up()
+
 				default:
 					switch event.Ch {
 					case 'Q': fallthrough
