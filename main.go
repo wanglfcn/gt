@@ -10,7 +10,8 @@ var serverList *ServerList
 
 func main() {
 
-	host := ""
+	title 	 := ""
+	host 	 := ""
 	username := ""
 	password := ""
 
@@ -59,7 +60,7 @@ func main() {
 			case termbox.EventKey :
 				switch event.Key {
 				case termbox.KeyEnter:
-					username, password, host = serverList.select_node()
+					title, username, password, host = serverList.select_node()
 					break mainloop
 
 				case termbox.KeyEsc:
@@ -118,7 +119,7 @@ func main() {
 	termbox.Close()
 
 	if len(host) > 0 {
-		fmt.Printf("Host:%s\n", host)
+		fmt.Printf("Login:\t%s (%s)\n", title, host)
 		sshpass(username + "@" + host, password)
 	}
 }

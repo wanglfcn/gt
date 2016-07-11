@@ -234,11 +234,13 @@ func (this *ServerList)updateTitles() {
 	}
 }
 
-func (this *ServerList)select_node() (username, password, ip string) {
+func (this *ServerList)select_node() (title, username, password, ip string) {
+	title    = ""
 	username = ""
 	password = ""
 	ip 	 = ""
 	if this.currentID >= 0 && this.currentID < len(this.servers.services) {
+		title 	 = this.servers.services[this.currentID].Name
 		username = this.servers.services[this.currentID].User
 		password = this.servers.services[this.currentID].Passwd
 		ip 	 = this.servers.services[this.currentID].Ip
