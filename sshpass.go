@@ -1,4 +1,5 @@
 package main
+//#cgo CFLAGS: -std=gnu99 -I/usr/include
 //#include "sshpass.h"
 import "C"
 
