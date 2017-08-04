@@ -1,2 +1,2 @@
 all:
-	go build -o gt
+	go build -o gt -x

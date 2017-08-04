@@ -119,7 +119,7 @@ func main() {
 	termbox.Close()
 
 	if len(host) > 0 {
-		fmt.Printf("Login:\t%s (%s)\n", title, host)
+		fmt.Printf("Login:\t%s (%s)\n%s\n", title, host, username + "@" + host)
 		sshpass(username + "@" + host, password)
 	}
 }
