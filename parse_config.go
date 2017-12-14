@@ -1,12 +1,25 @@
 package main
 import (
 	"fmt"
-	"github.com/bitly/go-simplejson"
+	"gopkg.in/yaml.v2"
 	"strings"
 	"os"
 	"io/ioutil"
 )
 
+type ServerInfo struct {
+	Name 		string			`yaml:"name"`
+	Ip 			string			`yaml:"ip"`
+	User 		string			`yaml:"user"`
+	Passwd 		string			`yaml:"password"`
+	Children 	[]ServerInfo	`yaml:"children"`
+}
+
+type GtConfig struct {
+	DefaultUser 	string			`yaml:"defaultUser"`
+	DefaultPasswd 	string			`yaml:"defaultPassword"`
+	Services 		[]ServerInfo	`yaml:"services"`
+}
 
 type Server struct {
 	Name	string
@@ -34,62 +47,43 @@ func NewServices() *Servers{
 		os.Exit(1)
 	}
 
-	config, err := simplejson.NewJson(config_content)
+	config := GtConfig{}
+	err = yaml.Unmarshal(config_content, &config)
 	machines := new(Servers)
 
 	if err != nil {
 		fmt.Println("parse config encounter error: %s", err)
 	}
 
-	machines.parse_config(config, 0, 0)
+	machines.parse_config(config.Services, config.DefaultUser, config.DefaultPasswd, 0, 0)
 	machines.UpdateLines()
 
 	return machines
 }
 
-func (this *Servers)parse_config(config *simplejson.Json, level int, index int) (num int) {
-	var i int = 0
+func (this *Servers)parse_config(config []ServerInfo, defaultUser string, defaultPassword string, level int, index int) (num int) {
+	if config == nil {
+		return
+	}
 
-	for true {
-		machine := config.GetIndex(i)
-		i++
+	for _, machine := range config {
 
-		names_json, exist := machine.CheckGet("name")
-		if !exist {
-			break
+		user := machine.User
+		if user == "" {
+			user = defaultUser
 		}
 
-		names := names_json.MustStringArray()
-		ips := machine.Get("ip").MustStringArray()
-		users := machine.Get("user").MustStringArray()
-		passwds := machine.Get("passwd").MustStringArray()
-
-		var name string
-		var user string
-		var passwd string
-
-		for array_index, ip := range ips {
-			if array_index >= len(names) {
-				name = names[0]
-			} else {
-				name = names[array_index]
-			}
-
-			if array_index >= len(users) {
-				user = users[0]
-				passwd = passwds[0]
-			} else {
-				user = users[array_index]
-				passwd = passwds[array_index]
-			}
-
-			this.services = append(this.services, Server{Name: name, User: user, Ip: ip, Passwd: passwd, Level: level, Visible: false, Index: index, Leaf: true})
-			index ++
+		password := machine.Passwd
+		if password == "" {
+			password = defaultPassword
 		}
 
-		if child, exist := machine.CheckGet("child"); exist {
+		this.services = append(this.services, Server{Name: machine.Name, User: user, Ip: machine.Ip, Passwd: password, Level: level, Visible: false, Index: index, Leaf: true})
+		index ++
+
+		if machine.Children != nil && len(machine.Children) > 0 {
 			this.services[index - 1].Leaf = false
-			index = this.parse_config(child, level + 1, index)
+			index = this.parse_config(machine.Children, defaultUser, defaultPassword, level + 1, index)
 		}
 	}
 	return index

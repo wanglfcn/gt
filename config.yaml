@@ -1,0 +1,17 @@
+defaultUser: user
+defaultPassword: password
+
+services:
+- name: machine-name
+  ip:   10.100.1.1
+  user: user
+  password: password
+  children:
+  - name: child1
+    ip:   10.100.1.2
+
+- name: machine
+  ip:   10.100.1.3
+  children:
+  - name: child
+    ip:   10.100.1.4
